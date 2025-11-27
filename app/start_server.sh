@@ -15,7 +15,7 @@ if [ $? -eq 0 ]; then
     
     # if [ $? -eq 0 ]; then
     echo "Starting development server..."
-    python manage.py runserver 0.0.0.0:8000
+    python manage.py runserver 0.0.0.0:8001
     # else
     #     echo "Migrations failed!"
     #     exit 1
