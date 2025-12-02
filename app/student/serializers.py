@@ -4,17 +4,35 @@ from user.serializers import UserProfileSerializer
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
-    """Serializer for StudentProfile model."""
+    """Serializer for StudentProfile model with nested user updates."""
     
-    user = UserProfileSerializer(read_only=True)
+    user = UserProfileSerializer() 
     
     class Meta:
         model = StudentProfile
         fields = ['user', 'roll_number', 'batch', 'enrollment_year', 'phone', 'address']
-
+        
+    def update(self, instance, validated_data):
+        """Custom update method to handle nested user data."""
+        user_data = validated_data.pop('user', None)
+        
+        # Update StudentProfile fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update nested User fields if provided
+        if user_data:
+            user_serializer = UserProfileSerializer(instance.user, data=user_data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save()
+        
+        return instance
+        
 
 class StudentProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating student profile - limited fields."""
+
     
     class Meta:
         model = StudentProfile

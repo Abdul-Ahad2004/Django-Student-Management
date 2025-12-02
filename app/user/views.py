@@ -47,7 +47,7 @@ class ProfileAPIView(APIView):
     """API for user profile management."""
     
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserProfileSerializer  # Add this for schema generation
+    serializer_class = UserProfileSerializer 
     
     def get(self, request):
         """Get current user profile."""
@@ -55,18 +55,10 @@ class ProfileAPIView(APIView):
         return Response(serializer.data)
     
     def patch(self, request):
-        """Update user profile with role-based restrictions."""
-        if request.user.role == 'STUDENT':
-            # Students can only update name
-            serializer = StudentProfileUpdateSerializer(
+        """Update user profile ."""
+        serializer = UserProfileSerializer(
                 request.user, data=request.data, partial=True
             )
-        else:
-            # Teachers and admins can update more fields (except email and role)
-            serializer = UserProfileSerializer(
-                request.user, data=request.data, partial=True
-            )
-        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -77,7 +69,7 @@ class ChangePasswordAPIView(APIView):
     """API for changing password."""
     
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = ChangePasswordSerializer  # Add this for schema generation
+    serializer_class = ChangePasswordSerializer 
     
     def post(self, request):
         """Change user password."""
@@ -85,14 +77,12 @@ class ChangePasswordAPIView(APIView):
         if serializer.is_valid():
             user = request.user
             
-            # Check old password
             if not user.check_password(serializer.validated_data['old_password']):
                 return Response(
                     {'error': 'Invalid old password'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Set new password
             user.set_password(serializer.validated_data['new_password'])
             user.save()
             

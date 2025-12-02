@@ -1,9 +1,10 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.models import StudentProfile, Enrollment, TeacherProfile
 from core.permissions import IsAdminUser, IsStudentOwnerOrTeacherOrAdmin, IsStudentUser
-from .serializers import StudentProfileSerializer, StudentProfileUpdateSerializer, StudentEnrollmentsSerializer
+from .serializers import StudentProfileSerializer, StudentEnrollmentsSerializer
+from student.serializers import StudentProfileUpdateSerializer
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
@@ -11,49 +12,42 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     
     queryset = StudentProfile.objects.all()
     
+    def create(self, request, *args, **kwargs):
+        """Disable POST requests for student profile creation."""
+        return Response(
+            {"detail": "Student profiles are created automatically when users are created with STUDENT role."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
     def get_permissions(self):
         """Set permissions based on action."""
         if self.action == 'list':
-            # Admin can list all, teachers can see students in their courses, students see own
             permission_classes = [permissions.IsAuthenticated]
         elif self.action in ['create', 'destroy']:
-            # Only admin can create/delete student profiles
             permission_classes = [IsAdminUser]
         else:
-            # Student can view/update own profile, teachers can view students in their courses, admin can access all
             permission_classes = [IsStudentOwnerOrTeacherOrAdmin]
         return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
-        # Handle case when user is not authenticated (for schema generation)
+        """Return appropriate serializer based on action and user role."""
         if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
             return StudentProfileSerializer
             
+        # Use limited serializer for students, full serializer for admins
         if self.action in ['update', 'partial_update'] and self.request.user.role == 'STUDENT':
             return StudentProfileUpdateSerializer
         return StudentProfileSerializer
     
     def get_queryset(self):
         """Filter queryset based on user role."""
-        # Handle case when user is not authenticated (for schema generation)
         if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
             return StudentProfile.objects.none()
             
         if self.request.user.role == 'ADMIN':
             return StudentProfile.objects.all()
         elif self.request.user.role == 'TEACHER':
-            # Teachers can see students enrolled in their courses
-            try:
-                teacher_profile = TeacherProfile.objects.get(user=self.request.user)
-                teacher_courses = teacher_profile.courses.all()
-                enrolled_students = StudentProfile.objects.filter(
-                    enrollments__course__in=teacher_courses,
-                    enrollments__status='ACTIVE'
-                ).distinct()
-                return enrolled_students
-            except TeacherProfile.DoesNotExist:
-                return StudentProfile.objects.none()
+            return StudentProfile.objects.all()
         elif self.request.user.role == 'STUDENT':
             return StudentProfile.objects.filter(user=self.request.user)
         return StudentProfile.objects.none()

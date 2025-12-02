@@ -13,22 +13,25 @@ class TeacherProfileViewSet(viewsets.ModelViewSet):
     
     queryset = TeacherProfile.objects.all()
     
+    def create(self, request, *args, **kwargs):
+        """Disable POST requests for teacher profile creation."""
+        return Response(
+            {"detail": "Teacher profiles are created automatically when users are created with TEACHER role."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
     def get_permissions(self):
         """Set permissions based on action."""
         if self.action == 'list':
-            # Admin can list all, teachers can see their own
             permission_classes = [permissions.IsAuthenticated]
         elif self.action in ['create', 'destroy']:
-            # Only admin can create/delete teacher profiles
             permission_classes = [IsAdminUser]
         else:
-            # Teacher can view/update own profile, admin can access all
             permission_classes = [IsTeacherOwnerOrAdmin]
         return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
-        # Handle case when user is not authenticated (for schema generation)
         if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
             return TeacherProfileSerializer
             
@@ -38,7 +41,6 @@ class TeacherProfileViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filter queryset based on user role."""
-        # Handle case when user is not authenticated (for schema generation)
         if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
             return TeacherProfile.objects.none()
             

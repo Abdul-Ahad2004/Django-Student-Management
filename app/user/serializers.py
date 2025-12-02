@@ -5,28 +5,39 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model."""
     
     password = serializers.CharField(write_only=True, min_length=5)
-    
+    roll_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    batch = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    enrollment_year = serializers.IntegerField(write_only=True, required=False)
+    student_phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    student_address = serializers.CharField(write_only=True, required=False, allow_blank=True) 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'password', 'created_at', 'updated_at']
+        fields = ['id', 'email', 'name', 'role', 'password', 'created_at', 'updated_at','roll_number', 'batch', 'enrollment_year', 'student_phone', 'student_address']
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def create(self, validated_data):
         """Create a new user with encrypted password."""
         password = validated_data.pop('password')
+        roll_number = validated_data.pop('roll_number', None)
+        batch = validated_data.pop('batch', None)
+        enrollment_year = validated_data.pop('enrollment_year', None)
+        student_phone = validated_data.pop('student_phone', None)
+        student_address = validated_data.pop('student_address', None)
+
         user = User.objects.create_user(**validated_data)
         user.set_password(password)
         user.save()
         
-        # Create profile based on role
         if user.role == 'TEACHER':
             TeacherProfile.objects.create(user=user)
         elif user.role == 'STUDENT':
             StudentProfile.objects.create(
                 user=user,
-                roll_number=f'STU{user.id.hex[:8].upper()}',  # Generate a roll number
-                batch='2024',  # Default batch, can be customized
-                enrollment_year=2024  # Default enrollment year
+                roll_number=roll_number or '',
+                batch=batch or '',
+                enrollment_year=enrollment_year or 0,
+                phone=student_phone or '',
+                address=student_address or ''
             )
         
         return user
