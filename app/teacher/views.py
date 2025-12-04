@@ -3,15 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.models import TeacherProfile, Course, Enrollment, StudentProfile
 from core.permissions import IsAdminUser, IsTeacherOwnerOrAdmin, IsTeacherUser
-from .serializers import TeacherProfileSerializer, TeacherProfileUpdateSerializer, TeacherCoursesSerializer
+from .serializers import TeacherProfileSerializer, TeacherCoursesSerializer
 from student.serializers import StudentProfileSerializer
 from enrollment.serializers import EnrollmentSerializer
 
 
 class TeacherProfileViewSet(viewsets.ModelViewSet):
     """ViewSet for TeacherProfile management."""
-    
+    serializer_class= TeacherProfileSerializer
     queryset = TeacherProfile.objects.all()
+
     
     def create(self, request, *args, **kwargs):
         """Disable POST requests for teacher profile creation."""
@@ -29,15 +30,6 @@ class TeacherProfileViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [IsTeacherOwnerOrAdmin]
         return [permission() for permission in permission_classes]
-    
-    def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
-        if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
-            return TeacherProfileSerializer
-            
-        if self.action in ['update', 'partial_update'] and self.request.user.role == 'TEACHER':
-            return TeacherProfileUpdateSerializer
-        return TeacherProfileSerializer
     
     def get_queryset(self):
         """Filter queryset based on user role."""

@@ -11,6 +11,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = ['user', 'roll_number', 'batch', 'enrollment_year', 'phone', 'address']
+        read_only_fields = ['roll_number', 'batch', 'enrollment_year']
         
     def update(self, instance, validated_data):
         """Custom update method to handle nested user data."""
@@ -29,14 +30,6 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         
         return instance
         
-
-class StudentProfileUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating student profile - limited fields."""
-
-    
-    class Meta:
-        model = StudentProfile
-        fields = ['phone', 'address']
 
 
 class StudentEnrollmentsSerializer(serializers.ModelSerializer):

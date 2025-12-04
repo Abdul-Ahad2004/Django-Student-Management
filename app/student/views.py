@@ -4,12 +4,11 @@ from rest_framework.response import Response
 from core.models import StudentProfile, Enrollment, TeacherProfile
 from core.permissions import IsAdminUser, IsStudentOwnerOrTeacherOrAdmin, IsStudentUser
 from .serializers import StudentProfileSerializer, StudentEnrollmentsSerializer
-from student.serializers import StudentProfileUpdateSerializer
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
     """ViewSet for StudentProfile management."""
-    
+    serializer_class= StudentProfileSerializer
     queryset = StudentProfile.objects.all()
     
     def create(self, request, *args, **kwargs):
@@ -29,15 +28,6 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
             permission_classes = [IsStudentOwnerOrTeacherOrAdmin]
         return [permission() for permission in permission_classes]
     
-    def get_serializer_class(self):
-        """Return appropriate serializer based on action and user role."""
-        if not hasattr(self.request, 'user') or not self.request.user.is_authenticated:
-            return StudentProfileSerializer
-            
-        # Use limited serializer for students, full serializer for admins
-        if self.action in ['update', 'partial_update'] and self.request.user.role == 'STUDENT':
-            return StudentProfileUpdateSerializer
-        return StudentProfileSerializer
     
     def get_queryset(self):
         """Filter queryset based on user role."""

@@ -30,14 +30,6 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
-class TeacherProfileUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating teacher profile - excludes user and non-editable fields."""
-    
-    class Meta:
-        model = TeacherProfile
-        fields = ['phone', 'address', 'qualification', 'experience_years']
-
-
 class TeacherCoursesSerializer(serializers.ModelSerializer):
     """Serializer for courses assigned to teacher."""
     
