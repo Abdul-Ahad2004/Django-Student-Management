@@ -1,5 +1,7 @@
-from rest_framework import serializers
+from rest_framework import serializers,status
+from rest_framework.response import Response
 from core.models import User, TeacherProfile, StudentProfile
+from core.email_utils import EmailNotificationService
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model."""
@@ -31,6 +33,9 @@ class UserSerializer(serializers.ModelSerializer):
         if user.role == 'TEACHER':
             TeacherProfile.objects.create(user=user)
         elif user.role == 'STUDENT':
+            if StudentProfile.objects.filter(roll_number=roll_number).exists():
+                User.objects.filter(id=user.id).delete()  # Clean up created user
+                raise serializers.ValidationError({"error": "Student with this roll number already exists."})
             StudentProfile.objects.create(
                 user=user,
                 roll_number=roll_number or '',
@@ -39,7 +44,16 @@ class UserSerializer(serializers.ModelSerializer):
                 phone=student_phone or '',
                 address=student_address or ''
             )
-        
+        try:    
+            EmailNotificationService.send_account_created_notification(
+                user=user,
+                password=password
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send account creation notification for user {user.email}: {str(e)}")
+
         return user
 
 
@@ -51,13 +65,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'name', 'role', 'created_at', 'updated_at']
         read_only_fields = ['id', 'email', 'role', 'created_at', 'updated_at']
 
-
-class StudentProfileUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for students to update their own profile."""
-    
-    class Meta:
-        model = User
-        fields = ['name']
 
 
 class ChangePasswordSerializer(serializers.Serializer):

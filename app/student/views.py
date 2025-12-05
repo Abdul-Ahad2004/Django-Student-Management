@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.models import StudentProfile, Enrollment, TeacherProfile
 from core.permissions import IsAdminUser, IsStudentOwnerOrTeacherOrAdmin, IsStudentUser
-from .serializers import StudentProfileSerializer, StudentEnrollmentsSerializer
+from .serializers import StudentProfileSerializer, StudentEnrollmentsSerializer, StudentProfileUpdateSerializer
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
@@ -49,3 +49,13 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         enrollments = student.enrollments.all()
         serializer = StudentEnrollmentsSerializer(enrollments, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
+    def update_profile(self, request, pk=None):
+        """Update student's profile."""
+        student = self.get_object()
+        serializer = StudentProfileUpdateSerializer(student, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

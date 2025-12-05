@@ -29,6 +29,14 @@ class StudentProfileSerializer(serializers.ModelSerializer):
                 user_serializer.save()
         
         return instance
+    
+class StudentProfileUpdateSerializer(StudentProfileSerializer):
+    """Serializer for StudentProfile model  for Admin pto update non-editable fields."""  
+    
+    class Meta():
+       model = StudentProfile
+       fields = ['user', 'roll_number', 'batch', 'enrollment_year', 'phone', 'address']
+       read_only_fields = []
         
 
 

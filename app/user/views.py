@@ -8,7 +8,6 @@ from core.permissions import IsAdminUser, IsOwnerOrAdminUser, IsStudentUser
 from .serializers import (
     UserSerializer, 
     UserProfileSerializer, 
-    StudentProfileUpdateSerializer,
     ChangePasswordSerializer
 )
 

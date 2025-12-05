@@ -4,23 +4,6 @@ from core.models import User, Course, Enrollment
 from core.email_utils import EmailNotificationService
 
 
-@receiver(post_save, sender=User)
-def send_account_created_notification(sender, instance, created, **kwargs):
-    """
-    Send account creation notification when a new user is created.
-    """
-    if created:
-        try:
-            EmailNotificationService.send_account_created_notification(
-                user=instance,
-                password=None 
-            )
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send account creation notification for user {instance.email}: {str(e)}")
-
-
 @receiver(pre_save, sender=Course)
 def store_previous_teacher(sender, instance, **kwargs):
     """
