@@ -4,3 +4,4 @@ psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
 djangorestframework-simplejwt>=5.2.0
 drf-spectacular>=0.26.0
+sendgrid>=6.10.0
